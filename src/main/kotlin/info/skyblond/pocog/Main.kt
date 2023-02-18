@@ -12,9 +12,9 @@ fun main() {
     val videoHeight = 1080
     val cellSize = 10
     val framerate = 60 // 60 fps
-    val framePerStep = 12 // 200ms
+    val framePerStep = 6 // 100ms
     val seed = 12345678
-    val step = 2000
+    val step = 5000
 
     val random = Random(seed)
 

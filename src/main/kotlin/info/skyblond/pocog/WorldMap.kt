@@ -24,6 +24,24 @@ class WorldMap private constructor(
         return data[y][wordIndex] and (1 shl wordOffset) != 0
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is WorldMap) return false
+
+        if (height != other.height) return false
+        if (width != other.width) return false
+        if (!data.contentDeepEquals(other.data)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = height
+        result = 31 * result + width
+        result = 31 * result + data.contentDeepHashCode()
+        return result
+    }
+
     class Builder(
         private val width: Int, private val height: Int
     ) {
@@ -61,4 +79,6 @@ class WorldMap private constructor(
             return WorldMap(height, width, result)
         }
     }
+
+
 }
