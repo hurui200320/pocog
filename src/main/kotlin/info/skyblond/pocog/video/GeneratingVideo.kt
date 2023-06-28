@@ -8,10 +8,10 @@ object GeneratingVideo {
     @JvmStatic
     fun main(args: Array<String>) {
         val videoGenerator = VideoGenerator(
-            videoWidth = 1920, videoHeight = 1080, cellSize = 2,
-            framerate = 60.0, framePerStep = 6,
+            videoWidth = 480 * 3, videoHeight = 360 * 3, cellSize = 3,
+            framerate = 30.0, framePerStep = 3,
             backend = ConwaysGame.Backend.OPEN_CL,
-            preFill = 32,// 768
+            preFill = 160,
             showGrid = false
         )
 
@@ -25,7 +25,8 @@ object GeneratingVideo {
         println("Start encoding...")
         videoGenerator.startEncoding(
             "output_seed_${seed}_step_${step}.mp4",
-            "mp4", VideoGenerator.Codec.HEVC_NVENC
+            "mp4", VideoGenerator.Codec.HEVC_NVENC,
+            bitrate = 68_000_000
         )
         val preStepMap = ConcurrentHashMap<Int, Long>()
         println("Rendering...")

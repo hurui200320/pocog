@@ -1,5 +1,6 @@
 package info.skyblond.pocog
 
+import info.skyblond.pocog.dl4j.checkResult
 import info.skyblond.pocog.game.ConwaysGameCPU
 import kotlin.random.Random
 import kotlin.system.measureTimeMillis
@@ -31,13 +32,13 @@ object Validate {
         val time = measureTimeMillis {
             for (i in 0 until step) {
                 println("Step#$i")
-                val (currentStatus, nextStatus) = game.getWorldMap()
+                val (currentState, nextState) = game.getWorldMap()
                     .also { it.checkResult() }
                 for (y in 0 until game.gameHeight) {
                     for (x in 0 until game.gameWidth) {
-                        val nc = currentStatus.countNeighbors(x, y)
-                        val current = currentStatus[x, y]
-                        val next = nextStatus[x, y]
+                        val nc = currentState.countNeighbors(x, y)
+                        val current = currentState[x, y]
+                        val next = nextState[x, y]
                         val c = if (current) {
                             if (next) "O" else "X"
                         } else {
@@ -59,21 +60,4 @@ object Validate {
     }
 }
 
-fun Pair<WorldMap, WorldMap>.checkResult() {
-    val currentMap = this.first
-    val nextMap = this.second
-    for (y in 0 until currentMap.height) {
-        for (x in 0 until currentMap.width) {
-            val current = currentMap[x, y]
-            val next = nextMap[x, y]
-            val nc = currentMap.countNeighbors(x, y)
-            if (current) { // current alive
-                if (next) check(nc == 2 || nc == 3) { "($x, $y) should die, but alive, nc: $nc" } // still alive
-                else check(nc < 2 || nc > 3) { "($x, $y) should alive, but die, nc: $nc" }  // die next tick
-            } else { // current die
-                if (next) check(nc == 3) { "($x, $y) shouldn't alive, but did, nc: $nc" }  // alive next tick
-                else check(nc != 3) { "($x, $y) should alive, but didn't, nc: $nc" }  // still die
-            }
-        }
-    }
-}
+

@@ -13,9 +13,6 @@ open class TestBench {
         @Param("25", "33", "42", "50")
         open var heightSubdivisionSize = 0
 
-        @Param("12")
-        open var parallelism = 0
-
         private val random = Random(1234)
 
         @Volatile
@@ -25,14 +22,14 @@ open class TestBench {
         fun setUp() {
             game = ConwaysGameCPU(
                 600, 600,
-                parallelism, heightSubdivisionSize
+                heightSubdivisionSize
             )
             game.reset { _, _ -> random.nextBoolean() }
         }
 
         @TearDown
         fun tearDown() {
-            game.close()
+//            game.close()
         }
     }
 

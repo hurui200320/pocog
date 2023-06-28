@@ -1,5 +1,6 @@
 package info.skyblond.pocog
 
+import info.skyblond.pocog.dl4j.checkResult
 import info.skyblond.pocog.game.ConwaysGame
 import info.skyblond.pocog.game.ConwaysGameCPU
 import info.skyblond.pocog.game.ConwaysGameOpenCL
@@ -13,20 +14,20 @@ fun main() {
     val step = 10
     val seed = 1234
 
-    println("Preparing initial status...")
-    val initialStatus = WorldMap.Builder(gameWidth, gameHeight)
+    println("Preparing initial state...")
+    val initialState = WorldMap.Builder(gameWidth, gameHeight)
         .also { builder ->
             val random = Random(seed)
             for (y in 0 until gameHeight) {
                 for (idx in 0 until builder.wordWidth) {
-                    builder.setBlock(y, idx, random.nextInt())
+                    builder.setWord(y, idx, random.nextInt())
                 }
             }
         }
         .build()
 
     ConwaysGameOpenCL(gameWidth, gameHeight, rowPerKernel = 32).use { game ->
-        game.reset(initialStatus)
+        game.reset(initialState)
         println("GPU test started...")
         repeat(step) { i ->
             val ms = game.measureStep()
@@ -37,7 +38,7 @@ fun main() {
 
 
     ConwaysGameCPU(gameWidth, gameHeight).let { game ->
-        game.reset(initialStatus)
+        game.reset(initialState)
         println("CPU test started...")
         repeat(step) { i ->
             val ms = game.measureStep()

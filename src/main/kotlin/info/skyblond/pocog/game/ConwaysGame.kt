@@ -24,19 +24,19 @@ abstract class ConwaysGame(
     protected val lock = ReentrantLock()
 
     /**
-     * Current world status.
+     * Current world state.
      * */
     @Volatile
-    protected var cellStatus: WorldMap = WorldMap.Builder(gameWidth, gameHeight).build()
+    protected var cellState: WorldMap = WorldMap.Builder(gameWidth, gameHeight).build()
 
     /**
      * How world should be at next tick.
      * */
     @Volatile
-    protected var nextCellStatus: WorldMap? = null
+    protected var nextCellState: WorldMap? = null
 
     /**
-     * Set the initial status.
+     * Set the initial state.
      * Synced by [lock].
      * */
     fun reset(generator: (x: Int, y: Int) -> Boolean): Unit = lock.withLock {
@@ -46,14 +46,16 @@ abstract class ConwaysGame(
                 builder[i, j] = generator(i, j)
             }
         }
-        cellStatus = builder.build()
+        cellState = builder.build()
+        nextCellState = null
     }
 
     /**
-     * Reset the initial status to [status].
+     * Reset the initial state to [state].
      * */
-    fun reset(status: WorldMap): Unit = lock.withLock {
-        cellStatus = status
+    fun reset(state: WorldMap): Unit = lock.withLock {
+        cellState = state
+        nextCellState = null
     }
 
     /**
@@ -61,11 +63,11 @@ abstract class ConwaysGame(
      * Synced by [lock].
      * */
     fun getWorldMap(): Pair<WorldMap, WorldMap> = lock.withLock {
-        if (nextCellStatus == null) {
+        if (nextCellState == null) {
             calculateNextTick()
-            check(nextCellStatus != null) { "Should have next tick status, but didn't" }
+            check(nextCellState != null) { "Should have next tick state, but didn't" }
         }
-        return cellStatus to nextCellStatus!!
+        return cellState to nextCellState!!
     }
 
     /**
@@ -73,16 +75,16 @@ abstract class ConwaysGame(
      * Synced by [lock].
      * */
     fun swapToNextTick(): Unit = lock.withLock {
-        // done update, swap status
-        if (nextCellStatus == null) calculateNextTick()
-        cellStatus = nextCellStatus!!
-        nextCellStatus = null
+        // done update, swap state
+        if (nextCellState == null) calculateNextTick()
+        cellState = nextCellState!!
+        nextCellState = null
     }
 
     /**
      * Calculate the next tick. This will update the whole map concurrently.
      * Should be synced by [lock].
-     * This method should ensure the [nextCellStatus] is not null before return.
+     * This method should ensure the [nextCellState] is not null before return.
      * */
     protected abstract fun calculateNextTick()
 
@@ -91,7 +93,7 @@ abstract class ConwaysGame(
         background: Color, grid: Color?,
         alive: Color, aboutToDie: Color, aboutToLive: Color
     ): BufferedImage {
-        val (currentStatus, nextStatus) = getWorldMap()
+        val (currentState, nextState) = getWorldMap()
         val result = BufferedImage(videoWidth, videoHeight, BufferedImage.TYPE_4BYTE_ABGR)
         for (y in 0 until videoHeight) {
             val cellY = y / cellSize
@@ -104,8 +106,8 @@ abstract class ConwaysGame(
                     }
                 }
                 val cellX = x / cellSize
-                val next = nextStatus[cellX, cellY]
-                if (currentStatus[cellX, cellY]) {
+                val next = nextState[cellX, cellY]
+                if (currentState[cellX, cellY]) {
                     // current alive
                     if (next) result.setRGB(x, y, alive.rgb)
                     else result.setRGB(x, y, aboutToDie.rgb)

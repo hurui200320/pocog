@@ -1,10 +1,8 @@
 package info.skyblond.pocog.video
 
-import info.skyblond.pocog.checkResult
 import info.skyblond.pocog.game.ConwaysGame
 import info.skyblond.pocog.game.ConwaysGameCPU
 import info.skyblond.pocog.game.ConwaysGameOpenCL
-import io.humble.video.*
 import org.bytedeco.ffmpeg.global.avutil
 import org.bytedeco.javacv.FFmpegFrameRecorder
 import org.bytedeco.javacv.Java2DFrameConverter
@@ -85,16 +83,13 @@ class VideoGenerator(
         require(recorder != null) { "Encoding not started" }
         val imageQueue = ConcurrentLinkedQueue<BufferedImage>()
         val t = thread(isDaemon = true) {
-            val list = mutableListOf<Thread>()
             for (i in 0 until n) {
-                // generate image for current status
+                // generate image for current state
                 val image = game.generateBufferedImage(
                     videoWidth, videoHeight, cellSize,
                     Color.BLACK, if (showGrid) Color.GRAY else null,
                     Color.WHITE, Color.LIGHT_GRAY, Color.DARK_GRAY
                 )
-                val w = game.getWorldMap()
-                list.add(thread { w.checkResult() })
                 imageQueue.add(image)
                 if (imageQueue.size == 1)
                 // we just added to an empty queue, or there are too much
@@ -104,7 +99,6 @@ class VideoGenerator(
                     }
                 game.swapToNextTick()
             }
-            list.forEach { it.join() }
         }
 
         println("Pre filling...")

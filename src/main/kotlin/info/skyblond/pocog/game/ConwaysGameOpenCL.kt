@@ -40,16 +40,16 @@ class ConwaysGameOpenCL(
      * Must be the multiple of [localWorkSize].
      * Here we define each task handle a word, aka 32 cells.
      * */
-    private val globalWorkSize: Int = calculateGlobalWorkSize(localWorkSize, cellStatus.wordWidth)
+    private val globalWorkSize: Int = calculateGlobalWorkSize(localWorkSize, cellState.wordWidth)
 
     /**
      * Each time we update [rowPerKernel] rows per kernel
      * */
     private val inputBuffers = Array(rowPerKernel + 2) {
-        context.createIntBuffer(cellStatus.wordWidth, CLMemory.Mem.READ_ONLY)
+        context.createIntBuffer(cellState.wordWidth, CLMemory.Mem.READ_ONLY)
     }
     private val outputBuffers = Array(rowPerKernel) {
-        context.createIntBuffer(cellStatus.wordWidth, CLMemory.Mem.WRITE_ONLY)
+        context.createIntBuffer(cellState.wordWidth, CLMemory.Mem.WRITE_ONLY)
     }
 
     /**
@@ -87,7 +87,7 @@ class ConwaysGameOpenCL(
     private fun CLBuffer<IntBuffer>.fillBuffer(y: Int) {
         this.buffer.let {
             it.clear() // make sure it's ready to write
-            cellStatus.writeRowToIntBuffer(y, it)
+            cellState.writeRowToIntBuffer(y, it)
         }
     }
 
@@ -137,7 +137,7 @@ class ConwaysGameOpenCL(
         lastStepOpenCLTime = (0 until gameHeight step rowPerKernel).map { y ->
             calculateRows(builder, y)
         }.sumOf { it / 1000.0 }.toLong() / 1000 // to ms
-        nextCellStatus = builder.build()
+        nextCellState = builder.build()
     }
 
     /**

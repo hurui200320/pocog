@@ -31,15 +31,24 @@ class WorldMap private constructor(
     val wordWidth = data[0].size
 
     /**
-     * Read the status of cell ([x],[y]).
+     * Read the state of cell ([x],[y]).
      * Return true if cell is alive, false if cell is dead.
      * */
     operator fun get(x: Int, y: Int): Boolean {
-        require(x in 0 until width) { "x out of bound" }
-        require(y in 0 until height) { "y out of bound" }
+        if (x !in 0 until width) return false
+        if (y !in 0 until height) return false
         val wordIndex = x / Int.SIZE_BITS
         val wordOffset = x % Int.SIZE_BITS
         return data[y][wordIndex] and (1 shl wordOffset) != 0
+    }
+
+    /**
+     * Get a whole word.
+     * */
+    fun getWord(idx: Int, y: Int): Int {
+        require(idx in 0 until wordWidth) { "idx out of bound" }
+        require(y in 0 until height) { "y out of bound" }
+        return data[y][idx]
     }
 
     /**
@@ -77,6 +86,23 @@ class WorldMap private constructor(
 
     }
 
+    /**
+     * Get the center area of the map. The result will fail the [info.skyblond.pocog.dl4j.checkResult].
+     * */
+    fun center(newWidth: Int, newHeight: Int): WorldMap {
+        require(newWidth <= width) { "New width $newWidth must not larger than current width $width" }
+        require(newHeight <= height) { "New height $newHeight must not larger than current height $height" }
+        val xOffset = (width - newWidth) / 2
+        val yOffset = (height - newHeight) / 2
+        val builder = Builder(newWidth, newHeight)
+        for (y in 0 until newHeight) {
+            for (x in 0 until newWidth) {
+                builder[x, y] = this[xOffset + x, yOffset + y]
+            }
+        }
+        return builder.build()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is WorldMap) return false
@@ -112,8 +138,8 @@ class WorldMap private constructor(
          * Thread-safe.
          * */
         operator fun set(x: Int, y: Int, newValue: Boolean) {
-            require(y in 0 until height) { "y out of bound" }
-            require(x in 0 until width) { "x out of bound" }
+            if (x !in 0 until width) return
+            if (y !in 0 until height) return
             val wordIndex = x / Int.SIZE_BITS
             val wordOffset = x % Int.SIZE_BITS
             locks[y].withLock {
@@ -148,7 +174,7 @@ class WorldMap private constructor(
             buffer.rewind()
         }
 
-        internal fun setBlock(y: Int, idx: Int, value: Int) {
+        internal fun setWord(y: Int, idx: Int, value: Int) {
             require(idx in 0 until this.wordWidth) { "Idx out of range: $idx" }
             require(y in 0 until height) { "Y out of range: $y" }
             locks[y].withLock {
@@ -157,7 +183,7 @@ class WorldMap private constructor(
         }
 
         /**
-         * Copy the current status to a new array, and pack it into a [WorldMap].
+         * Copy the current state to a new array, and pack it into a [WorldMap].
          * This is not thread-safe as it copy rows one by one.
          * */
         fun build(): WorldMap {

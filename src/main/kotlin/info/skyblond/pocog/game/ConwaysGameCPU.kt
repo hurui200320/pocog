@@ -28,9 +28,9 @@ class ConwaysGameCPU(
      * 4. Otherwise, it keeps ding.
      * */
     private fun updateCell(builder: WorldMap.Builder, x: Int, y: Int) {
-        val currentStatus = cellStatus[x, y]
-        val neighbor = cellStatus.countNeighbors(x, y)
-        if (currentStatus) {
+        val currentState = cellState[x, y]
+        val neighbor = cellState.countNeighbors(x, y)
+        if (currentState) {
             // Any live cell with two or three live neighbours lives on to the next generation.
             // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
             // Any live cell with more than three live neighbours dies, as if by overpopulation.
@@ -64,6 +64,6 @@ class ConwaysGameCPU(
             }.also { futureList.add(it) }
         }
         futureList.forEach { it.get() }
-        nextCellStatus = builder.build()
+        nextCellState = builder.build()
     }
 }
